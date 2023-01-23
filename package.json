@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/jsnmarkd/tinyapp/issues"
   },
-  "homepage": "https://github.com/jsnmarkd/tinyapp#readme"
+  "homepage": "https://github.com/jsnmarkd/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
