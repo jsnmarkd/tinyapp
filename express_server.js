@@ -67,3 +67,10 @@ app.post("/urls", (req, res) => {
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
 });
+
+app.post("/urls/:id/delete", (req, res) => {
+  console.log(req.params);
+  let id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect("/urls");
+});
