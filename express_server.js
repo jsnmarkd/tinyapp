@@ -130,13 +130,33 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 });
 
+function getUserByEmail(email) {
+  // const arrUsers = Object.values(users) 
+  for (const i in users) {
+    if (users[i].email === email) {
+      return users[i];
+    }
+  }
+  return null;
+}
+
 app.post("/register", (req, res) => {
-  const id = generateRandomString();
-  users[id] = {
-    id: id,
-    email: req.body.email,
-    password: req.body.password,
-  } 
-  res.cookie("user_id", id);
-  res.redirect('/urls');
+  //1. Checking for the email and password is null or not?
+  if (req.body.email === "" || req.body.password === ""){
+    return res.sendStatus(400);
+  }
+  //2. Check for the email is not already registered
+  if(getUserByEmail(req.body.email)){
+    return res.send("Email is already registered. Please try again")
+  } else {
+  //3. Everything is fine and we can register the new users
+    const id = generateRandomString();
+    users[id] = {
+      id: id,
+      email: req.body.email,
+      password: req.body.password,
+    } 
+    res.cookie("user_id", id);
+    res.redirect('/urls');
+  }
 });
