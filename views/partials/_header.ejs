@@ -16,15 +16,17 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <% if (user) { %>
-        <%- user.email %>
-        <form action="/logout" method="POST">
-          <button type="submit" class="btn btn-sm btn-outline-secondary">logout</button>
-        </form>
-      <% } else { %>
-        <a class="btn btn-sm btn-outline-primary" href="/login" role="button">Login</a>
-        <a class="btn btn-sm btn-outline-secondary" href="/register" role="button">Register</a>
-      <% } %>
+      <div class="navbar-nav">
+        <% if (user) { %>
+          <%- user.email %>
+          <form action="/logout" method="POST">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">logout</button>
+          </form>
+        <% } else { %>
+          <a class="nav-item nav-link" href="/login">Login</a>
+          <a class="nav-item nav-link" href="/register">Register</a>
+        <% } %>
+      </div>
     </div>
   </nav>
 </header>

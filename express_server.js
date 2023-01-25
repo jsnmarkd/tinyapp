@@ -129,14 +129,23 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const user = users[req.cookies.user_id].email;
-  res.cookie("user", user);
-  res.redirect("/urls");
+  let loginEmail = req.body.email;
+  if (!getUserByEmail(loginEmail)) {
+    return res.sendStatus(403);
+  }
+  let pass = req.body.password;
+  for (const id in users) {
+    if (users[id].password === pass && users[id].email === loginEmail) {
+      res.cookie("user_id", id);
+      res.redirect("/urls");
+    }
+  }
+  return res.sendStatus(403);
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 function getUserByEmail(email) {
