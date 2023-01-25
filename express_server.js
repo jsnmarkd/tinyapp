@@ -85,6 +85,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.redirect("/login");
+  }
   const user = users[req.cookies.user_id];
   const templateVars = { 
     urls: urlDatabase,
@@ -94,17 +97,30 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const user = users[req.cookies.user_id];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user, };
-  res.render("urls_show", templateVars);
+  for (const i in urlDatabase) {
+    if (i === req.params.id) {
+      const user = users[req.cookies.user_id];
+      const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user, };
+      res.render("urls_show", templateVars);
+    }
+  }
+  return res.send("Error! The ID you are trying to reach does not exist");
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]
-  res.redirect(longURL);
+  for (const i in urlDatabase) {
+    if (i === req.params.id) {
+      const longURL = urlDatabase[req.params.id];
+      res.redirect(longURL);
+    }
+  }
+  return res.send("Error! The ID you are trying to reach does not exist");
 });
 
 app.post("/urls", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("You have to be logged in to shorten a URL")
+  }
   const id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
