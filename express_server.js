@@ -96,7 +96,6 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   const id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
@@ -115,7 +114,6 @@ app.post("/urls/:id/edit", (req, res) => {
 })
 
 app.post("/urls/:id/delete", (req, res) => {
-  console.log(req.params);
   let id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
@@ -140,7 +138,5 @@ app.post("/register", (req, res) => {
     password: req.body.password,
   } 
   res.cookie("user_id", id);
-  console.log(users);
-  console.log(req.body);
   res.redirect('/urls');
 });
