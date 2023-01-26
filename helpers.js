@@ -47,4 +47,6 @@ const addUser = (database, email, password, id) => {
   } 
 };
 
+const authenticateUser = 
+
 module.exports = { urlsForUser, generateRandomString, getUserByEmail, addUser };
