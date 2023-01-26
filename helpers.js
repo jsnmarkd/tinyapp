@@ -2,11 +2,11 @@
 const { users, urlDatabase, } = require("./database");
 const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
 
-const urlsForUser = id => {
+const urlsForUser = (id, database) => {
   let userUrls = {};
-  for (const i in urlDatabase) {
-    if (id === urlDatabase[i].userID) {
-      userUrls[i] = urlDatabase[i];
+  for (const i in database) {
+    if (id === database[i].userID) {
+      userUrls[i] = database[i];
     }
   }
   console.log(userUrls);
@@ -29,10 +29,10 @@ const generateRandomString = () => {
   return result;
 };
 
-const getUserByEmail = email => {
-  for (const i in users) {
-    if (users[i].email === email) {
-      return users[i];
+const getUserByEmail = (email, database) => {
+  for (const i in database) {
+    if (database[i].email === email) {
+      return database[i];
     }
   }
   return null;
@@ -46,7 +46,5 @@ const addUser = (database, email, password, id) => {
     password: hashedPassword,
   } 
 };
-
-const authenticateUser = 
 
 module.exports = { urlsForUser, generateRandomString, getUserByEmail, addUser };

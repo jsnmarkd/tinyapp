@@ -9,6 +9,9 @@ const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); // Renders EJS
 
+// Database
+const { users, urlDatabase, } = require("./database");
+
 // Middlewares
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -18,7 +21,15 @@ app.use(cookieSession({
   keys: ["I have a secret"],
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
+app.use((req, res, next) => {
+  const id = req.session.user_id;
+  const whiteList = ["/", "/login", "/register", "/logout"];
+  if (id || whiteList.includes(req.url)) {
+    return next();
+  }
+  res.redirect("/login");
+});
 
 // Helper Functions
 const { 
@@ -36,9 +47,6 @@ app.get("/", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
-// Database
-const { users, urlDatabase, } = require("./database");
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -64,23 +72,18 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.send("Please login or register.")
-  }
   const id = req.session.user_id;
   const user = users[id];
   const templateVars = { 
-    urls: urlsForUser(id),
+    urls: urlsForUser(id, urlDatabase),
     user, 
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
-  const user = users[req.session.user_id];
+  const id = req.session.user_id;
+  const user = users[id];
   const templateVars = { 
     urls: urlDatabase,
     user, 
@@ -126,7 +129,7 @@ app.post("/urls/:id", (req, res) => {
     return res.send("Invalid ID")
   }
   const userId = req.session.user_id;
-  if (!urlsForUser(userId)) {
+  if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL")
   }
   const id = req.params.id;
@@ -141,7 +144,7 @@ app.post("/urls/:id/edit", (req, res) => {
     return res.send("Invalid ID")
   }
   const userId = req.session.user_id;
-  if (!urlsForUser(userId)) {
+  if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL")
   }
   const id = req.params.id;
@@ -158,7 +161,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.send("Invalid ID")
   }
   const userId = req.session.user_id;
-  if (!urlsForUser(userId)) {
+  if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL")
   }
   const id = req.params.id;
@@ -168,7 +171,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/login", (req, res) => {
   const loginEmail = req.body.email;
-  if (!getUserByEmail(loginEmail)) {
+  if (!getUserByEmail(loginEmail, users)) {
     return res.send("Incorrect login");
   }
   const pass = req.body.password;
@@ -192,7 +195,7 @@ app.post("/register", (req, res) => {
     return res.sendStatus(400);
   }
   //2. Check for the email is not already registered
-  if(getUserByEmail(req.body.email)){
+  if(getUserByEmail(req.body.email, users)){
     return res.send("Email is already registered. Please try again")
   } else {
     //3. Everything is fine and we can register the new users
