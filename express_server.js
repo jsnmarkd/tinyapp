@@ -1,9 +1,13 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
+
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
+app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -68,7 +72,8 @@ app.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  // res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/hello", (req, res) => {
