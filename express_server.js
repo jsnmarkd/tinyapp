@@ -1,84 +1,36 @@
-const express = require("express");
-const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
-const bcrypt = require("bcryptjs");
+const express = require("express"); // Require Express Framework (Server)
+const cookieParser = require('cookie-parser'); // Require Cookie Parser (Parses string to cookie)
+const morgan = require('morgan'); // Require Morgan (Logs all requests received)
+const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
 
-const app = express();
+const app = express(); // Sets up Server
 const PORT = 8080; // default port 8080
 
-app.set("view engine", "ejs");
+app.set("view engine", "ejs"); // Renders EJS
+
+// Middlewares
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
-
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-  aJ48lW: {
-    id: "aJ48lW",
-    email: "user4@example.com",
-    password: "p4ss",
-  },
-};
-
-function urlsForUser(id) {
-  let userUrls = {};
-  for (const i in urlDatabase) {
-    if (id === urlDatabase[i].userID) {
-      userUrls[i] = urlDatabase[i];
-    }
-  }
-  console.log(userUrls);
-  return userUrls;
-}
-
-function generateRandomString() { 
-  let result = '';
-  const arrayOfLetters = 
-    [
-      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-      '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
-    ];
-  for (let i = 6; i > 0; i--) {
-    result += arrayOfLetters[Math.floor(Math.random() * arrayOfLetters.length)];
-  }
-  return result;
-};
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+// Helper Functions
+const { 
+  urlsForUser, 
+  generateRandomString, 
+  getUserByEmail 
+} = require("./helpers");
 
 app.get("/", (req, res) => {
   // res.send("Hello!");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+// Database
+const { users, urlDatabase, } = require("./database");
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -201,40 +153,30 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!urlsForUser(userId)) {
     return res.send("You do not have access to this URL")
   }
-  let id = req.params.id;
+  const id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
-  let loginEmail = req.body.email;
+  const loginEmail = req.body.email;
   if (!getUserByEmail(loginEmail)) {
-    return res.sendStatus(403);
+    return res.send("Incorrect login");
   }
-  let pass = req.body.password;
+  const pass = req.body.password;
   for (const id in users) {
-    if (users[id].password === pass && users[id].email === loginEmail) {
+    if (bcrypt.compareSync(pass, users[id].password) && users[id].email === loginEmail) {
       res.cookie("user_id", id);
       res.redirect("/urls");
     }
   }
-  return res.sendStatus(403);
+  return res.send("Incorrect login");
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect('/login');
 });
-
-function getUserByEmail(email) {
-  // const arrUsers = Object.values(users) 
-  for (const i in users) {
-    if (users[i].email === email) {
-      return users[i];
-    }
-  }
-  return null;
-}
 
 app.post("/register", (req, res) => {
   //1. Checking for the email and password is null or not?
@@ -245,14 +187,21 @@ app.post("/register", (req, res) => {
   if(getUserByEmail(req.body.email)){
     return res.send("Email is already registered. Please try again")
   } else {
-  //3. Everything is fine and we can register the new users
+    //3. Everything is fine and we can register the new users
     const id = generateRandomString();
+    const password = req.body.password;
+    const hashedPassword = bcrypt.hashSync(password, 10);
     users[id] = {
       id: id,
       email: req.body.email,
-      password: req.body.password,
+      password: hashedPassword,
     } 
     res.cookie("user_id", id);
     res.redirect('/urls');
   }
+});
+
+// Logs that Server is up
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
