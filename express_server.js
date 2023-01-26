@@ -149,7 +149,7 @@ app.post("/urls", (req, res) => {
     return res.send("You have to be logged in to shorten a URL")
   }
   const id = generateRandomString();
-  urlDatabase[id] = { longURL: req.body.longURL };
+  urlDatabase[id] = { longURL: req.body.longURL, userID: req.cookies.user_id, };
   res.redirect(`/urls/${id}`);
 });
 
