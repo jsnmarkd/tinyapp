@@ -154,11 +154,31 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("You have to be logged in to shorten a URL")
+  }
+  if (!req.params.id) {
+    return res.send("Invalid ID")
+  }
+  const userId = req.cookies.user_id;
+  if (!urlsForUser(userId)) {
+    return res.send("You do not have access to this URL")
+  }
   const id = req.params.id;
   res.redirect(`/urls/${id}`);
 })
 
 app.post("/urls/:id/edit", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("You have to be logged in to edit this URL")
+  }
+  if (!req.params.id) {
+    return res.send("Invalid ID")
+  }
+  const userId = req.cookies.user_id;
+  if (!urlsForUser(userId)) {
+    return res.send("You do not have access to this URL")
+  }
   const id = req.params.id;
   const newUrl = req.body.newUrl;
   urlDatabase[id].longURL = newUrl;
@@ -166,6 +186,16 @@ app.post("/urls/:id/edit", (req, res) => {
 })
 
 app.post("/urls/:id/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("You have to be logged in to delete this URL")
+  }
+  if (!req.params.id) {
+    return res.send("Invalid ID")
+  }
+  const userId = req.cookies.user_id;
+  if (!urlsForUser(userId)) {
+    return res.send("You do not have access to this URL")
+  }
   let id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
