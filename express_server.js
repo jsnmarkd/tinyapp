@@ -8,8 +8,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -23,7 +29,23 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
+  aJ48lW: {
+    id: "aJ48lW",
+    email: "user4@example.com",
+    password: "p4ss",
+  },
 };
+
+function urlsForUser(id) {
+  let userUrls = {};
+  for (const i in urlDatabase) {
+    if (id === urlDatabase[i].userID) {
+      userUrls[i] = urlDatabase[i];
+    }
+  }
+  console.log(userUrls);
+  return userUrls;
+}
 
 function generateRandomString() { 
   let result = '';
@@ -58,7 +80,8 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const id = req.cookies.user_id;
+  const user = users[id];
   const templateVars = { 
     urls: urlDatabase,
     user, 
@@ -76,9 +99,13 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies.user_id];
+  if (!req.cookies.user_id) {
+    return res.send("Please login or register.")
+  }
+  const id = req.cookies.user_id;
+  const user = users[id];
   const templateVars = { 
-    urls: urlDatabase,
+    urls: urlsForUser(id),
     user, 
   };
   res.render("urls_index", templateVars);
@@ -100,7 +127,7 @@ app.get("/urls/:id", (req, res) => {
   for (const i in urlDatabase) {
     if (i === req.params.id) {
       const user = users[req.cookies.user_id];
-      const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user, };
+      const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user, };
       res.render("urls_show", templateVars);
     }
   }
@@ -110,7 +137,7 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   for (const i in urlDatabase) {
     if (i === req.params.id) {
-      const longURL = urlDatabase[req.params.id];
+      const longURL = urlDatabase[req.params.id].longURL;
       res.redirect(longURL);
     }
   }
@@ -122,7 +149,7 @@ app.post("/urls", (req, res) => {
     return res.send("You have to be logged in to shorten a URL")
   }
   const id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id] = { longURL: req.body.longURL };
   res.redirect(`/urls/${id}`);
 });
 
@@ -134,7 +161,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls/:id/edit", (req, res) => {
   const id = req.params.id;
   const newUrl = req.body.newUrl;
-  urlDatabase[id] = newUrl;
+  urlDatabase[id].longURL = newUrl;
   res.redirect("/urls");
 })
 
