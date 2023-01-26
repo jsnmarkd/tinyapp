@@ -17,7 +17,8 @@ app.use(cookieParser());
 const { 
   urlsForUser, 
   generateRandomString, 
-  getUserByEmail 
+  getUserByEmail,
+  addUser, 
 } = require("./helpers");
 
 app.get("/", (req, res) => {
@@ -189,13 +190,8 @@ app.post("/register", (req, res) => {
   } else {
     //3. Everything is fine and we can register the new users
     const id = generateRandomString();
-    const password = req.body.password;
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    users[id] = {
-      id: id,
-      email: req.body.email,
-      password: hashedPassword,
-    } 
+    const { email, password } = req.body;
+    addUser(users, email, password, id);
     res.cookie("user_id", id);
     res.redirect('/urls');
   }
