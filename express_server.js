@@ -19,10 +19,9 @@ app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ["I have a secret"],
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  maxAge: 24 * 60 * 60 * 1000
 }));
-app.use((req, res, next) => {
+app.use((req, res, next) => { // Middleware that checks if you are logged in, else redirects
   const id = req.session.user_id;
   const whiteList = ["/", "/login", "/register", "/logout"];
   if (id || whiteList.includes(req.url)) {
@@ -32,11 +31,11 @@ app.use((req, res, next) => {
 });
 
 // Helper Functions
-const { 
-  urlsForUser, 
-  generateRandomString, 
+const {
+  urlsForUser,
+  generateRandomString,
   getUserByEmail,
-  addUser, 
+  addUser,
 } = require("./helpers");
 
 app.get("/", (req, res) => {
@@ -55,18 +54,18 @@ app.get("/urls.json", (req, res) => {
 app.get("/register", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
-    user, 
+    user,
   };
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   const user = users[req.session.user_id];
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
-    user, 
+    user,
   };
   res.render("urls_login", templateVars);
 });
@@ -74,9 +73,9 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
-  const templateVars = { 
+  const templateVars = {
     urls: urlsForUser(id, urlDatabase),
-    user, 
+    user,
   };
   res.render("urls_index", templateVars);
 });
@@ -84,9 +83,9 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
-    user, 
+    user,
   };
   res.render("urls_new",templateVars);
 });
@@ -114,7 +113,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
-    return res.send("You have to be logged in to shorten a URL")
+    return res.send("You have to be logged in to shorten a URL");
   }
   const id = generateRandomString();
   urlDatabase[id] = { longURL: req.body.longURL, userID: req.session.user_id, };
@@ -123,46 +122,46 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
-    return res.send("You have to be logged in to shorten a URL")
+    return res.send("You have to be logged in to shorten a URL");
   }
   if (!req.params.id) {
-    return res.send("Invalid ID")
+    return res.send("Invalid ID");
   }
   const userId = req.session.user_id;
   if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL")
+    return res.send("You do not have access to this URL");
   }
   const id = req.params.id;
   res.redirect(`/urls/${id}`);
-})
+});
 
 app.post("/urls/:id/edit", (req, res) => {
   if (!req.session.user_id) {
-    return res.send("You have to be logged in to edit this URL")
+    return res.send("You have to be logged in to edit this URL");
   }
   if (!req.params.id) {
-    return res.send("Invalid ID")
+    return res.send("Invalid ID");
   }
   const userId = req.session.user_id;
   if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL")
+    return res.send("You do not have access to this URL");
   }
   const id = req.params.id;
   const newUrl = req.body.newUrl;
   urlDatabase[id].longURL = newUrl;
   res.redirect("/urls");
-})
+});
 
 app.post("/urls/:id/delete", (req, res) => {
   if (!req.session.user_id) {
-    return res.send("You have to be logged in to delete this URL")
+    return res.send("You have to be logged in to delete this URL");
   }
   if (!req.params.id) {
-    return res.send("Invalid ID")
+    return res.send("Invalid ID");
   }
   const userId = req.session.user_id;
   if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL")
+    return res.send("You do not have access to this URL");
   }
   const id = req.params.id;
   delete urlDatabase[id];
@@ -191,12 +190,12 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   //1. Checking for the email and password is null or not?
-  if (req.body.email === "" || req.body.password === ""){
+  if (req.body.email === "" || req.body.password === "") {
     return res.sendStatus(400);
   }
   //2. Check for the email is not already registered
-  if(getUserByEmail(req.body.email, users)){
-    return res.send("Email is already registered. Please try again")
+  if (getUserByEmail(req.body.email, users)) {
+    return res.send("Email is already registered. Please try again");
   } else {
     //3. Everything is fine and we can register the new users
     const id = generateRandomString();

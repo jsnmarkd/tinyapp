@@ -1,5 +1,3 @@
-// Database
-const { users, urlDatabase, } = require("./database");
 const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
 
 const urlsForUser = (id, database) => {
