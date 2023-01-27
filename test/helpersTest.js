@@ -24,6 +24,6 @@ describe('getUserByEmail', function() {
   it('should return null if an email is not in our users database', function() {
     const user = getUserByEmail("nope@example.com", testUsers)
     const expectedOutput = null;
-    assert(user === expectedOutput, "Should return undefined");
+    assert(user === expectedOutput, "Should return null");
   });
 });

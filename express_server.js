@@ -9,10 +9,9 @@ const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); // Renders EJS
 
-// Database
-const { users, urlDatabase, } = require("./database");
+const { users, urlDatabase, } = require("./database"); // Database to test
 
-// Middlewares
+//////////  Middlewares  //////////
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -21,16 +20,17 @@ app.use(cookieSession({
   keys: ["I have a secret"],
   maxAge: 24 * 60 * 60 * 1000
 }));
-app.use((req, res, next) => { // Middleware that checks if you are logged in, else redirects
+app.use((req, res, next) => { 
+  // Middleware that checks if you are logged in, else sends an error message
   const id = req.session.user_id;
   const whiteList = ["/", "/login", "/register", "/logout", "/u/:id"];
   if (id || whiteList.includes(req.url) || req.url.slice(0, 3) === "/u/") {
     return next();
   }
-  res.redirect("/login");
+  res.send("Please login or register");
 });
 
-// Helper Functions
+//////////  Helper Functions  //////////
 const {
   urlsForUser,
   generateRandomString,
@@ -38,35 +38,43 @@ const {
   addUser,
 } = require("./helpers");
 
+//////////  GET routes  //////////
 app.get("/", (req, res) => {
-  // res.send("Hello!");
+  const id = req.session.user_id;
+  // Checks if user is logged in, else redirects to login page
+  if(id) {
+    res.redirect("/urls");
+  }
   res.redirect("/login");
-});
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
 });
 
 app.get("/register", (req, res) => {
+  // Checks if user is not logged in to render register page, else redirects to URL page
+  if(!req.session.user_id) {
+    const id = req.session.user_id;
+    const user = users[id];
+    const templateVars = {
+      urls: urlDatabase,
+      user,
+    };
+    res.render("urls_register", templateVars);
+  }
+  res.redirect("/urls");
+});
+
+app.get("/login", (req, res) => {
+  // Renders login page
   const id = req.session.user_id;
   const user = users[id];
   const templateVars = {
     urls: urlDatabase,
     user,
   };
-  res.render("urls_register", templateVars);
-});
-app.get("/login", (req, res) => {
-  const user = users[req.session.user_id];
-  const templateVars = {
-    urls: urlDatabase,
-    user,
-  };
   res.render("urls_login", templateVars);
 });
+
 app.get("/urls", (req, res) => {
+  // Renders URL page
   const id = req.session.user_id;
   const user = users[id];
   const templateVars = {
@@ -75,7 +83,9 @@ app.get("/urls", (req, res) => {
   };
   res.render("urls_index", templateVars);
 });
+
 app.get("/urls/new", (req, res) => {
+  // Renders Create New URL page
   const id = req.session.user_id;
   const user = users[id];
   const templateVars = {
@@ -84,7 +94,9 @@ app.get("/urls/new", (req, res) => {
   };
   res.render("urls_new",templateVars);
 });
+
 app.get("/urls/:id", (req, res) => {
+  // Renders Edit page
   for (const i in urlDatabase) {
     if (i === req.params.id) {
       const user = users[req.session.user_id];
@@ -94,7 +106,9 @@ app.get("/urls/:id", (req, res) => {
   }
   return res.send("Error! The ID you are trying to reach does not exist");
 });
+
 app.get("/u/:id", (req, res) => {
+  // Redirects to proper URL
   for (const i in urlDatabase) {
     if (i === req.params.id) {
       const longURL = urlDatabase[req.params.id].longURL;
@@ -104,16 +118,16 @@ app.get("/u/:id", (req, res) => {
   return res.send("Error! The ID you are trying to reach does not exist");
 });
 
+//////////  POST routes  //////////
 app.post("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.send("You have to be logged in to shorten a URL");
-  }
+  // Create Tiny URL
   const id = generateRandomString();
   urlDatabase[id] = { longURL: req.body.longURL, userID: req.session.user_id, };
   res.redirect(`/urls/${id}`);
 });
 
 app.post("/urls/:id", (req, res) => {
+  // Checks if user is authorized to short URL
   if (!req.session.user_id) {
     return res.send("You have to be logged in to shorten a URL");
   }
@@ -124,11 +138,13 @@ app.post("/urls/:id", (req, res) => {
   if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL");
   }
+  // Short URL
   const id = req.params.id;
   res.redirect(`/urls/${id}`);
 });
 
 app.post("/urls/:id/edit", (req, res) => {
+  // Checks if user is authorized to edit URL
   if (!req.session.user_id) {
     return res.send("You have to be logged in to edit this URL");
   }
@@ -139,6 +155,7 @@ app.post("/urls/:id/edit", (req, res) => {
   if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL");
   }
+  // Edits URL
   const id = req.params.id;
   const newUrl = req.body.newUrl;
   urlDatabase[id].longURL = newUrl;
@@ -146,6 +163,7 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  // Checks if user is authorized to delete URL
   if (!req.session.user_id) {
     return res.send("You have to be logged in to delete this URL");
   }
@@ -156,6 +174,7 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!urlsForUser(userId, urlDatabase)) {
     return res.send("You do not have access to this URL");
   }
+  // Delete URL
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
@@ -163,9 +182,11 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/login", (req, res) => {
   const loginEmail = req.body.email;
+  // Checks if email exists in database
   if (!getUserByEmail(loginEmail, users)) {
     return res.send("Incorrect login");
   }
+  // Checks if encrypted password matches with the given email
   const pass = req.body.password;
   for (const id in users) {
     if (bcrypt.compareSync(pass, users[id].password) && users[id].email === loginEmail) {
@@ -173,10 +194,12 @@ app.post("/login", (req, res) => {
       res.redirect("/urls");
     }
   }
+  // Else send error message
   return res.send("Incorrect login");
 });
 
 app.post("/logout", (req, res) => {
+  // Clears cookie session and redirects to login page
   res.clearCookie("session");
   res.redirect('/login');
 });
