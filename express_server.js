@@ -23,8 +23,8 @@ app.use(cookieSession({
 }));
 app.use((req, res, next) => { // Middleware that checks if you are logged in, else redirects
   const id = req.session.user_id;
-  const whiteList = ["/", "/login", "/register", "/logout"];
-  if (id || whiteList.includes(req.url)) {
+  const whiteList = ["/", "/login", "/register", "/logout", "/u/:id"];
+  if (id || whiteList.includes(req.url) || req.url.slice(0, 3) === "/u/") {
     return next();
   }
   res.redirect("/login");
@@ -42,11 +42,9 @@ app.get("/", (req, res) => {
   // res.send("Hello!");
   res.redirect("/login");
 });
-
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -60,7 +58,6 @@ app.get("/register", (req, res) => {
   };
   res.render("urls_register", templateVars);
 });
-
 app.get("/login", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = {
@@ -69,7 +66,6 @@ app.get("/login", (req, res) => {
   };
   res.render("urls_login", templateVars);
 });
-
 app.get("/urls", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
@@ -79,7 +75,6 @@ app.get("/urls", (req, res) => {
   };
   res.render("urls_index", templateVars);
 });
-
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
@@ -89,7 +84,6 @@ app.get("/urls/new", (req, res) => {
   };
   res.render("urls_new",templateVars);
 });
-
 app.get("/urls/:id", (req, res) => {
   for (const i in urlDatabase) {
     if (i === req.params.id) {
@@ -100,7 +94,6 @@ app.get("/urls/:id", (req, res) => {
   }
   return res.send("Error! The ID you are trying to reach does not exist");
 });
-
 app.get("/u/:id", (req, res) => {
   for (const i in urlDatabase) {
     if (i === req.params.id) {

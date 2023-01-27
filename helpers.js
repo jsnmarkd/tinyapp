@@ -7,7 +7,6 @@ const urlsForUser = (id, database) => {
       userUrls[i] = database[i];
     }
   }
-  console.log(userUrls);
   return userUrls;
 };
 

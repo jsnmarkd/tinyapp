@@ -23,7 +23,7 @@ describe('getUserByEmail', function() {
   });
   it('should return null if an email is not in our users database', function() {
     const user = getUserByEmail("nope@example.com", testUsers)
-    const expectedUserID = null;
-    assert(user === expectedUserID, "Should return undefined");
+    const expectedOutput = null;
+    assert(user === expectedOutput, "Should return undefined");
   });
 });
