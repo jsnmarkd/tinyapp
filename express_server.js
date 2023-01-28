@@ -95,25 +95,44 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new",templateVars);
 });
 
+/**
+ *  /urls/:id
+ * 
+ * 1. Checks IF the ID exists in the database
+ * 2. Checks IF user is logged in
+ * 3. Checks IF user has access to the URL
+ * 
+ */
+
 app.get("/urls/:id", (req, res) => {
   const userId = req.session.user_id
+  const id = req.params.id;
 
+  if (!urlDatabase[id]) {
+    return res.send("Error! The ID you are trying to reach does not exist");
+  }
   if (!userId) {
-    return res.send("You have to be logged in to have access to this page");
+    return res.send(`You have to <a href="/login">login</a> to have access to this page`);
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
   }
 
-  for (const id in urlDatabase) {
-    if (id === req.params.id) {
+  for (const i in urlDatabase) {
+    if (i === req.params.id) {
       const user = users[req.session.user_id];
       const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user, };
       res.render("urls_show", templateVars);
     }
   }
-  return res.send("Error! The ID you are trying to reach does not exist");
 });
+
+/**
+ *  /u/:id
+ * 
+ * Checks IF the ID exists in the database
+ * 
+ */
 
 app.get("/u/:id", (req, res) => {
   for (const i in urlDatabase) {
@@ -136,7 +155,7 @@ app.post("/urls", (req, res) => {
   const userId = req.session.user_id
 
   if (!userId) {
-    return res.send("You have to be logged in to have access to this page");
+    return res.send(`You have to <a href="/login">login</a> to have access to this page`);
   }
 
   const id = generateRandomString();
@@ -153,12 +172,16 @@ app.post("/urls", (req, res) => {
  * 
  */
 
+/**
+ * SHORTEN A URL
+ */
+
 app.post("/urls/:id", (req, res) => {
   const userId = req.session.user_id;
   const id = req.params.id;
 
   if (!userId) {
-    return res.send("You have to be logged in to shorten a URL");
+    return res.send(`You have to <a href="/login">login</a> to shorten a URL`);
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
@@ -170,12 +193,16 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+/**
+ * EDIT
+ */
+
 app.post("/urls/:id/edit", (req, res) => {
   const userId = req.session.user_id;
   const id = req.params.id;
 
   if (!userId) {
-    return res.send("You have to be logged in to edit a URL");
+    return res.send(`You have to <a href="/login">login</a> to edit a URL`);
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
@@ -189,12 +216,16 @@ app.post("/urls/:id/edit", (req, res) => {
   res.redirect("/urls");
 });
 
+/**
+ * DELETE
+ */
+
 app.post("/urls/:id/delete", (req, res) => {
   const userId = req.session.user_id;
   const id = req.params.id;
 
   if (!userId) {
-    return res.send("You have to be logged in to delete a URL");
+    return res.send(`You have to <a href="/login">login</a> to delete a URL`);
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
