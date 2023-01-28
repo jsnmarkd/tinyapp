@@ -19,14 +19,6 @@ app.use(cookieSession({
   keys: ["I have a secret"],
   maxAge: 24 * 60 * 60 * 1000
 }));
-app.use((req, res, next) => { 
-  const id = req.session.user_id;
-  const whiteList = ["/", "/login", "/register", "/logout", "/u/:id"];
-  if (id || whiteList.includes(req.url) || req.url.slice(0, 3) === "/u/") {
-    return next();
-  }
-  res.send("Please login or register");
-});
 
 //////////  Helper Functions  //////////
 const {
@@ -39,7 +31,6 @@ const {
 //////////  GET routes  //////////
 app.get("/", (req, res) => {
   const id = req.session.user_id;
-  // Checks if user is logged in, else redirects to login page
   if(id) {
     res.redirect("/urls");
   }
@@ -63,6 +54,9 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   // Renders login page
   const id = req.session.user_id;
+  if(id) {
+    res.redirect("/urls");
+  }
   const user = users[id];
   const templateVars = {
     urls: urlDatabase,
@@ -74,6 +68,9 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   // Renders URL page
   const id = req.session.user_id;
+  if(!id) {
+    res.send(`Please <a href="/login">login</a> or <a href="/register">register</a>`);
+  }
   const user = users[id];
   const templateVars = {
     urls: urlsForUser(id, urlDatabase),
@@ -85,6 +82,9 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   // Renders Create New URL page
   const id = req.session.user_id;
+  if(!id) {
+    res.redirect("/login");
+  }
   const user = users[id];
   const templateVars = {
     urls: urlDatabase,
@@ -119,6 +119,9 @@ app.get("/u/:id", (req, res) => {
 //////////  POST routes  //////////
 app.post("/urls", (req, res) => {
   // Create Tiny URL
+  if (!req.session.user_id) {
+    return res.send("You have to be logged in to shorten a URL");
+  }
   const id = generateRandomString();
   urlDatabase[id] = { longURL: req.body.longURL, userID: req.session.user_id, };
   res.redirect(`/urls/${id}`);
@@ -126,15 +129,15 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   // Checks if user is authorized to short URL
+  const userId = req.session.user_id;
+  if (!urlsForUser(userId, urlDatabase)) {
+    return res.send("You do not have access to this URL");
+  }
   if (!req.session.user_id) {
     return res.send("You have to be logged in to shorten a URL");
   }
   if (!req.params.id) {
     return res.send("Invalid ID");
-  }
-  const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL");
   }
   // Short URL
   const id = req.params.id;
@@ -143,15 +146,15 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/edit", (req, res) => {
   // Checks if user is authorized to edit URL
+  const userId = req.session.user_id;
+  if (!urlsForUser(userId, urlDatabase)) {
+    return res.send("You do not have access to this URL");
+  }
   if (!req.session.user_id) {
     return res.send("You have to be logged in to edit this URL");
   }
   if (!req.params.id) {
     return res.send("Invalid ID");
-  }
-  const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL");
   }
   // Edits URL
   const id = req.params.id;
@@ -162,15 +165,15 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   // Checks if user is authorized to delete URL
+  const userId = req.session.user_id;
+  if (!urlsForUser(userId, urlDatabase)) {
+    return res.send("You do not have access to this URL");
+  }
   if (!req.session.user_id) {
     return res.send("You have to be logged in to delete this URL");
   }
   if (!req.params.id) {
     return res.send("Invalid ID");
-  }
-  const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL");
   }
   // Delete URL
   const id = req.params.id;
