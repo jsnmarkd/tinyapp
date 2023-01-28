@@ -10,8 +10,8 @@ const urlDatabase = {
   },
 };
 const hashedPassword3 = bcrypt.hashSync("p4ss", 10);
-const hashedPassword2 = bcrypt.hashSync("dishwasher-funk", 10);
-const hashedPassword1 = bcrypt.hashSync("purple-monkey-dinosaur", 10);
+const hashedPassword2 = bcrypt.hashSync("pass", 10);
+const hashedPassword1 = bcrypt.hashSync("1234", 10);
 const users = {
   userRandomID: {
     id: "userRandomID",

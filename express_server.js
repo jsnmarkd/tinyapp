@@ -120,7 +120,7 @@ app.get("/u/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   // Create Tiny URL
   if (!req.session.user_id) {
-    return res.send("You have to be logged in to shorten a URL");
+    return res.send("You have to be logged in to have access this page");
   }
   const id = generateRandomString();
   urlDatabase[id] = { longURL: req.body.longURL, userID: req.session.user_id, };
@@ -130,34 +130,34 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   // Checks if user is authorized to short URL
   const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
-    return res.send("You do not have access to this URL");
-  }
+  const id = req.params.id;
   if (!req.session.user_id) {
     return res.send("You have to be logged in to shorten a URL");
   }
-  if (!req.params.id) {
-    return res.send("Invalid ID");
+  if (!urlsForUser(userId, urlDatabase)[id]) {
+    return res.send("You do not have access to this URL");
+  }
+  if (!urlDatabase[id]) {
+    return res.send("This ID does not exist");
   }
   // Short URL
-  const id = req.params.id;
   res.redirect(`/urls/${id}`);
 });
 
 app.post("/urls/:id/edit", (req, res) => {
   // Checks if user is authorized to edit URL
   const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
+  const id = req.params.id;
+  if (!req.session.user_id) {
+    return res.send("You have to be logged in to edit a URL");
+  }
+  if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
   }
-  if (!req.session.user_id) {
-    return res.send("You have to be logged in to edit this URL");
-  }
-  if (!req.params.id) {
-    return res.send("Invalid ID");
+  if (!urlDatabase[id]) {
+    return res.send("This ID does not exist");
   }
   // Edits URL
-  const id = req.params.id;
   const newUrl = req.body.newUrl;
   urlDatabase[id].longURL = newUrl;
   res.redirect("/urls");
@@ -166,17 +166,17 @@ app.post("/urls/:id/edit", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   // Checks if user is authorized to delete URL
   const userId = req.session.user_id;
-  if (!urlsForUser(userId, urlDatabase)) {
+  const id = req.params.id;
+  if (!req.session.user_id) {
+    return res.send("You have to be logged in to delete a URL");
+  }
+  if (!urlsForUser(userId, urlDatabase)[id]) {
     return res.send("You do not have access to this URL");
   }
-  if (!req.session.user_id) {
-    return res.send("You have to be logged in to delete this URL");
-  }
-  if (!req.params.id) {
-    return res.send("Invalid ID");
+  if (!urlDatabase[id]) {
+    return res.send("This ID does not exist");
   }
   // Delete URL
-  const id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
 });
