@@ -33,7 +33,7 @@ const
 } = require("./helpers");
 
 /** 
- * GET ROUTES
+ * ALL GET ROUTES BELOW
  */  
 
 app.get("/", (req, res) => {
@@ -96,6 +96,15 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  const userId = req.session.user_id
+
+  if (!userId) {
+    return res.send("You have to be logged in to have access to this page");
+  }
+  if (!urlsForUser(userId, urlDatabase)[id]) {
+    return res.send("You do not have access to this URL");
+  }
+
   for (const id in urlDatabase) {
     if (id === req.params.id) {
       const user = users[req.session.user_id];
@@ -117,14 +126,17 @@ app.get("/u/:id", (req, res) => {
 });
 
 /** 
- * POST ROUTES
+ * ALL POST ROUTES BELOW
+ * 
+ * 1. Checks if user is logged in
  * 
  */
 
 app.post("/urls", (req, res) => {
+  const userId = req.session.user_id
 
-  if (!req.session.user_id) {
-    return res.send("You have to be logged in to have access this page");
+  if (!userId) {
+    return res.send("You have to be logged in to have access to this page");
   }
 
   const id = generateRandomString();
@@ -133,11 +145,11 @@ app.post("/urls", (req, res) => {
 });
 
 /**
- * SHORTEN A URL
+ * SHORTEN A URL - EDIT - DELETE
  * 
- * 1. Checks if user is logged in
- * 2. Checks if user has access to delete the URL
- * 3. Checks if the ID exists in the database 
+ * 1. Checks IF user is logged in
+ * 2. Checks IF user has access to functionality
+ * 3. Checks IF the ID exists in the database 
  * 
  */
 
@@ -154,17 +166,9 @@ app.post("/urls/:id", (req, res) => {
   if (!urlDatabase[id]) {
     return res.send("This ID does not exist");
   }
+
   res.redirect(`/urls/${id}`);
 });
-
-/**
- * EDIT
- * 
- * 1. Checks if user is logged in
- * 2. Checks if user has access to edit the URL
- * 3. Checks if the ID exists in the database 
- * 
- */
 
 app.post("/urls/:id/edit", (req, res) => {
   const userId = req.session.user_id;
@@ -184,15 +188,6 @@ app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[id].longURL = newUrl;
   res.redirect("/urls");
 });
-
-/**
- * DELETE
- * 
- * 1. Checks if user is logged in
- * 2. Checks if user has access to delete the URL
- * 3. Checks if the ID exists in the database 
- * 
- */
 
 app.post("/urls/:id/delete", (req, res) => {
   const userId = req.session.user_id;
@@ -215,8 +210,8 @@ app.post("/urls/:id/delete", (req, res) => {
 /** 
  * LOGIN
  * 
- * 1. Checks if email exists in database
- * 2. Checks if encrypted password matches with the given email
+ * 1. Checks IF email exists in database
+ * 2. Checks IF encrypted password matches with the given email
  * 
  */
 
