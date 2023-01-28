@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
+const bcrypt = require("bcryptjs"); 
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",

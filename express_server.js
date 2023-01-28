@@ -20,15 +20,22 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 
-//////////  Helper Functions  //////////
-const {
+/** 
+ * HELPER FUNCTIONS
+ */
+
+const 
+{
   urlsForUser,
   generateRandomString,
   getUserByEmail,
   addUser,
 } = require("./helpers");
 
-//////////  GET routes  //////////
+/** 
+ * GET ROUTES
+ */  
+
 app.get("/", (req, res) => {
   const id = req.session.user_id;
   if(id) {
@@ -38,12 +45,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  // Checks if user is not logged in to render register page, else redirects to URL page
-  if(!req.session.user_id) {
-    const id = req.session.user_id;
+  const id = req.session.user_id;
+  if(!id) {
     const user = users[id];
     const templateVars = {
-      urls: urlDatabase,
       user,
     };
     res.render("urls_register", templateVars);
@@ -52,7 +57,6 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  // Renders login page
   const id = req.session.user_id;
   if(id) {
     res.redirect("/urls");
@@ -66,7 +70,6 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  // Renders URL page
   const id = req.session.user_id;
   if(!id) {
     res.send(`Please <a href="/login">login</a> or <a href="/register">register</a>`);
@@ -80,7 +83,6 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  // Renders Create New URL page
   const id = req.session.user_id;
   if(!id) {
     res.redirect("/login");
@@ -94,9 +96,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  // Renders Edit page
-  for (const i in urlDatabase) {
-    if (i === req.params.id) {
+  for (const id in urlDatabase) {
+    if (id === req.params.id) {
       const user = users[req.session.user_id];
       const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user, };
       res.render("urls_show", templateVars);
@@ -106,7 +107,6 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  // Redirects to proper URL
   for (const i in urlDatabase) {
     if (i === req.params.id) {
       const longURL = urlDatabase[req.params.id].longURL;
@@ -116,22 +116,36 @@ app.get("/u/:id", (req, res) => {
   return res.send("Error! The ID you are trying to reach does not exist");
 });
 
-//////////  POST routes  //////////
+/** 
+ * POST ROUTES
+ * 
+ */
+
 app.post("/urls", (req, res) => {
-  // Create Tiny URL
+
   if (!req.session.user_id) {
     return res.send("You have to be logged in to have access this page");
   }
+
   const id = generateRandomString();
   urlDatabase[id] = { longURL: req.body.longURL, userID: req.session.user_id, };
   res.redirect(`/urls/${id}`);
 });
 
+/**
+ * SHORTEN A URL
+ * 
+ * 1. Checks if user is logged in
+ * 2. Checks if user has access to delete the URL
+ * 3. Checks if the ID exists in the database 
+ * 
+ */
+
 app.post("/urls/:id", (req, res) => {
-  // Checks if user is authorized to short URL
   const userId = req.session.user_id;
   const id = req.params.id;
-  if (!req.session.user_id) {
+
+  if (!userId) {
     return res.send("You have to be logged in to shorten a URL");
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
@@ -140,15 +154,23 @@ app.post("/urls/:id", (req, res) => {
   if (!urlDatabase[id]) {
     return res.send("This ID does not exist");
   }
-  // Short URL
   res.redirect(`/urls/${id}`);
 });
 
+/**
+ * EDIT
+ * 
+ * 1. Checks if user is logged in
+ * 2. Checks if user has access to edit the URL
+ * 3. Checks if the ID exists in the database 
+ * 
+ */
+
 app.post("/urls/:id/edit", (req, res) => {
-  // Checks if user is authorized to edit URL
   const userId = req.session.user_id;
   const id = req.params.id;
-  if (!req.session.user_id) {
+
+  if (!userId) {
     return res.send("You have to be logged in to edit a URL");
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
@@ -157,17 +179,26 @@ app.post("/urls/:id/edit", (req, res) => {
   if (!urlDatabase[id]) {
     return res.send("This ID does not exist");
   }
-  // Edits URL
+
   const newUrl = req.body.newUrl;
   urlDatabase[id].longURL = newUrl;
   res.redirect("/urls");
 });
 
+/**
+ * DELETE
+ * 
+ * 1. Checks if user is logged in
+ * 2. Checks if user has access to delete the URL
+ * 3. Checks if the ID exists in the database 
+ * 
+ */
+
 app.post("/urls/:id/delete", (req, res) => {
-  // Checks if user is authorized to delete URL
   const userId = req.session.user_id;
   const id = req.params.id;
-  if (!req.session.user_id) {
+
+  if (!userId) {
     return res.send("You have to be logged in to delete a URL");
   }
   if (!urlsForUser(userId, urlDatabase)[id]) {
@@ -176,26 +207,33 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!urlDatabase[id]) {
     return res.send("This ID does not exist");
   }
-  // Delete URL
+
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+/** 
+ * LOGIN
+ * 
+ * 1. Checks if email exists in database
+ * 2. Checks if encrypted password matches with the given email
+ * 
+ */
+
 app.post("/login", (req, res) => {
   const loginEmail = req.body.email;
-  // Checks if email exists in database
+  const pass = req.body.password;
+
   if (!getUserByEmail(loginEmail, users)) {
     return res.send("Incorrect login");
   }
-  // Checks if encrypted password matches with the given email
-  const pass = req.body.password;
   for (const id in users) {
     if (bcrypt.compareSync(pass, users[id].password) && users[id].email === loginEmail) {
       req.session.user_id = id;
       res.redirect("/urls");
     }
   }
-  // Else send error message
+
   return res.send("Incorrect login");
 });
 
@@ -204,16 +242,21 @@ app.post("/logout", (req, res) => {
   res.redirect('/login');
 });
 
+/** 
+ * REGISTER
+ * 
+ * 1. Checking for the email and password is null or not
+ * 2. Check for the email is not already registered
+ * 
+ */  
+
 app.post("/register", (req, res) => {
-  //1. Checking for the email and password is null or not?
   if (req.body.email === "" || req.body.password === "") {
     return res.sendStatus(400);
   }
-  //2. Check for the email is not already registered
   if (getUserByEmail(req.body.email, users)) {
     return res.send("Email is already registered. Please try again");
   } else {
-    //3. Everything is fine and we can register the new users
     const id = generateRandomString();
     const { email, password } = req.body;
     addUser(users, email, password, id);
