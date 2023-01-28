@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
+const bcrypt = require("bcryptjs");
 
 const urlsForUser = (id, database) => {
   let userUrls = {};
@@ -12,16 +12,9 @@ const urlsForUser = (id, database) => {
 
 const generateRandomString = () => { 
   let result = '';
-  const arrayOfLetters = 
-    [
-      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-      '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
-    ];
+  const charList = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   for (let i = 6; i > 0; i--) {
-    result += arrayOfLetters[Math.floor(Math.random() * arrayOfLetters.length)];
+    result += charList[Math.floor(Math.random() * charList.length)];
   }
   return result;
 };
