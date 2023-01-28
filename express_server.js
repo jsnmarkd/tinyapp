@@ -1,17 +1,16 @@
-const express = require("express"); // Require Express Framework (Server)
-const cookieParser = require('cookie-parser'); // Require Cookie Parser (Parses string to cookie)
-const morgan = require('morgan'); // Require Morgan (Logs all requests received)
-const bcrypt = require("bcryptjs"); // Require Bcrypt (Hashes/Encryts Passwords)
-const cookieSession = require('cookie-session'); // Require Cookie Session (Stores the session data on the client within a cookie)
+const express = require("express");
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
+const cookieSession = require('cookie-session');
 
-const app = express(); // Sets up Server
-const PORT = 8080; // default port 8080
+const app = express();
+const PORT = 8080;
 
-app.set("view engine", "ejs"); // Renders EJS
+app.set("view engine", "ejs");
 
-const { users, urlDatabase, } = require("./database"); // Database to test
+const { users, urlDatabase, } = require("./database");
 
-//////////  Middlewares  //////////
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -21,7 +20,6 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 app.use((req, res, next) => { 
-  // Middleware that checks if you are logged in, else sends an error message
   const id = req.session.user_id;
   const whiteList = ["/", "/login", "/register", "/logout", "/u/:id"];
   if (id || whiteList.includes(req.url) || req.url.slice(0, 3) === "/u/") {
@@ -199,7 +197,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  // Clears cookie session and redirects to login page
   res.clearCookie("session");
   res.redirect('/login');
 });
@@ -222,7 +219,6 @@ app.post("/register", (req, res) => {
   }
 });
 
-// Logs that Server is up
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
